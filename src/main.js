@@ -886,17 +886,24 @@ function animate() {
     }
     
     // ========================================
-    // CAMERA UPDATE (Third Person)
+    // CAMERA UPDATE (Third Person with Smoothing)
     // ========================================
     
-    // Calculate camera position in orbit around player
-    const camX = player.position.x + Math.sin(cameraOrbit.angleY) * cameraOrbit.distance;
-    const camZ = player.position.z + Math.cos(cameraOrbit.angleY) * cameraOrbit.distance;
-    const camY = player.position.y + CAMERA_HEIGHT + Math.sin(cameraOrbit.angleX) * cameraOrbit.distance;
+    // Calculate target camera position in orbit around player
+    const targetCamX = player.position.x + Math.sin(cameraOrbit.angleY) * cameraOrbit.distance;
+    const targetCamZ = player.position.z + Math.cos(cameraOrbit.angleY) * cameraOrbit.distance;
+    const targetCamY = player.position.y + CAMERA_HEIGHT + Math.sin(cameraOrbit.angleX) * cameraOrbit.distance;
     
-    camera.position.set(camX, camY, camZ);
+    // Smooth camera follow using lerp (linear interpolation)
+    // Higher value = faster follow, lower = smoother/slower
+    const cameraSmoothness = 8.0;
+    const lerpFactor = 1 - Math.exp(-cameraSmoothness * delta);
     
-    // Make camera look at player
+    camera.position.x += (targetCamX - camera.position.x) * lerpFactor;
+    camera.position.y += (targetCamY - camera.position.y) * lerpFactor;
+    camera.position.z += (targetCamZ - camera.position.z) * lerpFactor;
+    
+    // Make camera look at player (slightly ahead for better feel)
     camera.lookAt(
       player.position.x,
       player.position.y,  // Look at player's head height
