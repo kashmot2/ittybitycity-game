@@ -17,6 +17,7 @@
   "author": "Alex",
   "license": "MIT",
   "dependencies": {
+    "@gltf-transform/cli": "^4.3.0",
     "three": "^0.170.0",
     "vite": "^6.0.0",
     "ws": "^8.19.0"

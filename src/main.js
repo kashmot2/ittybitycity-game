@@ -26,6 +26,17 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+// ============================================================================
+// ASSET URLs - Hosted on GitHub Releases for stable CDN delivery
+// ============================================================================
+
+/** URL for the compressed city map (Draco compressed GLB) */
+const MAP_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/map-draco.glb';
+
+/** URL for the animated character model */
+const CHARACTER_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/character.glb';
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -640,12 +651,19 @@ document.addEventListener('keyup', (e) => {
 const loader = new GLTFLoader();
 const progressBar = document.getElementById('progress-bar');
 
+// Set up DRACO decoder for compressed meshes
+// Using Google's CDN for the decoder files
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+dracoLoader.setDecoderConfig({ type: 'js' });  // Use JS decoder for compatibility
+loader.setDRACOLoader(dracoLoader);
+
 /**
  * Load the character model (animated girl).
  * The model has a walk animation that plays when moving.
  */
 loader.load(
-  '/character.glb',
+  CHARACTER_URL,
   (gltf) => {
     characterModel = gltf.scene;
     
@@ -688,9 +706,10 @@ loader.load(
 /**
  * Load the city map.
  * This is the main environment the player explores.
+ * Uses Draco-compressed GLB for faster loading.
  */
 loader.load(
-  '/map.glb',
+  MAP_URL,
   (gltf) => {
     const model = gltf.scene;
     
