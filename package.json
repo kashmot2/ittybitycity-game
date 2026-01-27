@@ -6,13 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node server.js"
   },
-  "keywords": ["game", "three.js", "walking-simulator"],
+  "keywords": [
+    "game",
+    "three.js",
+    "walking-simulator"
+  ],
   "author": "Alex",
   "license": "MIT",
   "dependencies": {
     "three": "^0.170.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "ws": "^8.19.0"
   }
 }
