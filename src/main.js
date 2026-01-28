@@ -502,9 +502,104 @@ loader.load(
   },
   (error) => {
     console.error('Error loading map:', error);
-    loadingEl.querySelector('h1').textContent = '❌ Error Loading Map';
+    console.log('🏗️ Creating procedural city fallback...');
+    createProceduralCity();
+    progressBar.style.width = '100%';
+    loadingEl.querySelector('h1').textContent = '✨ Click to Explore (Demo City)';
   }
 );
+
+/**
+ * Creates a simple procedural city when the main map fails to load
+ */
+function createProceduralCity() {
+  const citySize = 100;
+  const blockSize = 15;
+  const streetWidth = 5;
+  
+  // Building materials
+  const buildingColors = [0x8b7355, 0xa0522d, 0xcd853f, 0xdeb887, 0xf5deb3, 0x87ceeb];
+  
+  // Create buildings in a grid
+  for (let x = -citySize/2; x < citySize/2; x += blockSize + streetWidth) {
+    for (let z = -citySize/2; z < citySize/2; z += blockSize + streetWidth) {
+      // Random building dimensions
+      const width = 5 + Math.random() * 8;
+      const depth = 5 + Math.random() * 8;
+      const height = 5 + Math.random() * 25;
+      
+      // Create building
+      const geometry = new THREE.BoxGeometry(width, height, depth);
+      const material = new THREE.MeshStandardMaterial({
+        color: buildingColors[Math.floor(Math.random() * buildingColors.length)],
+        roughness: 0.8
+      });
+      
+      const building = new THREE.Mesh(geometry, material);
+      building.position.set(
+        x + blockSize/2 + (Math.random() - 0.5) * 3,
+        height/2,
+        z + blockSize/2 + (Math.random() - 0.5) * 3
+      );
+      building.castShadow = true;
+      building.receiveShadow = true;
+      
+      scene.add(building);
+      collisionMeshes.push(building);
+      
+      // Add rooftop collision (walkable surface)
+      const roofGeom = new THREE.BoxGeometry(width + 0.5, 0.5, depth + 0.5);
+      const roofMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.9 });
+      const roof = new THREE.Mesh(roofGeom, roofMat);
+      roof.position.set(building.position.x, height + 0.25, building.position.z);
+      roof.receiveShadow = true;
+      scene.add(roof);
+      collisionMeshes.push(roof);
+    }
+  }
+  
+  // Create some stairs/ramps to rooftops
+  for (let i = 0; i < 10; i++) {
+    const stairX = (Math.random() - 0.5) * citySize * 0.8;
+    const stairZ = (Math.random() - 0.5) * citySize * 0.8;
+    const stairHeight = 3 + Math.random() * 8;
+    
+    // Create stair steps
+    for (let step = 0; step < stairHeight; step++) {
+      const stepGeom = new THREE.BoxGeometry(2, 0.3, 1);
+      const stepMat = new THREE.MeshStandardMaterial({ color: 0x808080 });
+      const stepMesh = new THREE.Mesh(stepGeom, stepMat);
+      stepMesh.position.set(stairX, step * 0.5 + 0.15, stairZ + step * 0.5);
+      stepMesh.receiveShadow = true;
+      stepMesh.castShadow = true;
+      scene.add(stepMesh);
+      collisionMeshes.push(stepMesh);
+    }
+  }
+  
+  // Add some crates for jumping/parkour
+  for (let i = 0; i < 30; i++) {
+    const crateSize = 0.5 + Math.random() * 1;
+    const crateGeom = new THREE.BoxGeometry(crateSize, crateSize, crateSize);
+    const crateMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, roughness: 0.9 });
+    const crate = new THREE.Mesh(crateGeom, crateMat);
+    crate.position.set(
+      (Math.random() - 0.5) * citySize,
+      crateSize/2,
+      (Math.random() - 0.5) * citySize
+    );
+    crate.castShadow = true;
+    crate.receiveShadow = true;
+    scene.add(crate);
+    collisionMeshes.push(crate);
+  }
+  
+  console.log(`🏙️ Procedural city created with ${collisionMeshes.length} collision meshes`);
+  
+  // Set player spawn
+  player.position.set(0, CONFIG.PLAYER_HEIGHT, 0);
+  player.groundHeight = 0;
+}
 
 // Fallback ground plane
 const groundGeom = new THREE.PlaneGeometry(1000, 1000);
