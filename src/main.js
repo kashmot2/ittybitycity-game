@@ -33,10 +33,11 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 // ============================================================================
 
 /** URL for the compressed city map (Draco compressed GLB) */
-const MAP_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/map-draco.glb';
+const ASSET_CDN = 'https://wash-hereby-trains-thoughts.trycloudflare.com';
+const MAP_URL = `${ASSET_CDN}/map-draco.glb`;
 
 /** URL for the animated character model */
-const CHARACTER_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/character.glb';
+const CHARACTER_URL = `${ASSET_CDN}/character.glb`;
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
