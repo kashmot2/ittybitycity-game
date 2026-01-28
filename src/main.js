@@ -29,14 +29,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // ============================================================================
-// ASSET URLs - Served via GitHub Releases (stable CDN, no tunnel needed)
+// ASSET URLs - Served from same origin (gh-pages) to avoid CORS issues
 // ============================================================================
 
 /** URL for the compressed city map (Draco compressed GLB) */
-const MAP_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/map-draco.glb';
+const MAP_URL = './map-draco.glb';
 
 /** URL for the animated character model */
-const CHARACTER_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/character.glb';
+const CHARACTER_URL = './character.glb';
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
