@@ -33,11 +33,11 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 // ============================================================================
 
 /** URL for the compressed city map (Draco compressed GLB) */
-const ASSET_CDN = 'https://wash-hereby-trains-thoughts.trycloudflare.com';
-const MAP_URL = `${ASSET_CDN}/map-draco.glb`;
+// Assets are served from the same origin (GitHub Pages) to avoid CORS issues
+const MAP_URL = './map-draco.glb';
 
 /** URL for the animated character model */
-const CHARACTER_URL = `${ASSET_CDN}/character.glb`;
+const CHARACTER_URL = './character.glb';
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
