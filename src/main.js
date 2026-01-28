@@ -29,14 +29,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // ============================================================================
-// ASSET URLs - Served via Cloudflare Tunnel (LFS files can't be served from GH Pages)
+// ASSET URLs - Served via GitHub Releases CDN
 // ============================================================================
 
 /** URL for the compressed city map (Draco compressed GLB) */
-const MAP_URL = 'https://pets-joan-custom-behind.trycloudflare.com/map-draco.glb';
+const MAP_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/map-draco.glb';
 
 /** URL for the animated character model */
-const CHARACTER_URL = 'https://pets-joan-custom-behind.trycloudflare.com/character.glb';
+const CHARACTER_URL = 'https://github.com/kashmot2/ittybitycity-game/releases/download/v1.0.0/character.glb';
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
