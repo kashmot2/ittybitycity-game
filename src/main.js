@@ -29,15 +29,14 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 // ============================================================================
-// ASSET URLs - Hosted on GitHub Releases for stable CDN delivery
+// ASSET URLs - Served via Cloudflare Tunnel (LFS files can't be served from GH Pages)
 // ============================================================================
 
 /** URL for the compressed city map (Draco compressed GLB) */
-// Assets are served from the same origin (GitHub Pages) to avoid CORS issues
-const MAP_URL = './map-draco.glb';
+const MAP_URL = 'https://pets-joan-custom-behind.trycloudflare.com/map-draco.glb';
 
 /** URL for the animated character model */
-const CHARACTER_URL = './character.glb';
+const CHARACTER_URL = 'https://pets-joan-custom-behind.trycloudflare.com/character.glb';
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
