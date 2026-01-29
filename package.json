@@ -21,5 +21,8 @@
     "three": "^0.170.0",
     "vite": "^6.0.0",
     "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.36.1"
   }
 }
