@@ -138,7 +138,7 @@ const player = {
 };
 
 const cameraOrbit = {
-  angleX: -0.1,  // Negative = look more horizontally/upward to see sky
+  angleX: 0.3,  // Positive = look down at character from behind
   angleY: 0,
   distance: CONFIG.CAMERA_DISTANCE
 };
@@ -739,8 +739,11 @@ function createProceduralCity() {
   
   console.log(`🏙️ Procedural city created with ${collisionMeshes.length} collision meshes`);
   
-  // Set player spawn inside city center with view of buildings
-  player.position.set(0, CONFIG.PLAYER_HEIGHT, 0);
+  // Set player spawn in a street intersection with clear view of buildings
+  // Grid: buildings at intervals of 20 (blockSize 15 + streetWidth 5)
+  // Street centers are at -40, -20, 0, 20, 40 etc.
+  // Spawn at (10, y, 10) which is in a street with buildings visible
+  player.position.set(10, CONFIG.PLAYER_HEIGHT, 10);
   player.groundHeight = 0;
   player.rotation = Math.PI / 4; // Face toward city center
   
