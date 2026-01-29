@@ -19,6 +19,16 @@
   
   <title>✨ Itty Bity City</title>
   
+  <!-- Import map for ES modules (Three.js from CDN) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  
   <style>
     /* ========================================
        RESET & BASE STYLES
@@ -187,6 +197,6 @@
     Loaded as ES module for import/export support.
     Contains all Three.js rendering and game logic.
   -->
-  <script type="module" src="/src/main.js"></script>
+  <script type="module" src="./src/main.js"></script>
 </body>
 </html>
