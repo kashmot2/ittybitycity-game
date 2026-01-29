@@ -393,64 +393,56 @@ dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5
 dracoLoader.setDecoderConfig({ type: 'js' });
 loader.setDRACOLoader(dracoLoader);
 
-// Load character
-loader.load(
-  CHARACTER_URL,
-  (gltf) => {
-    characterModel = gltf.scene;
-    
-    // Adjust scale if needed (depends on your model)
-    characterModel.scale.set(1, 1, 1);
-    
-    // Enable shadows
-    characterModel.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-    
-    scene.add(characterModel);
-    
-    // Set up animations
-    if (gltf.animations && gltf.animations.length > 0) {
-      characterMixer = new THREE.AnimationMixer(characterModel);
-      
-      console.log('✨ Character animations:', gltf.animations.map(a => a.name));
-      
-      // Find animations by name
-      for (const clip of gltf.animations) {
-        const name = clip.name.toLowerCase();
-        if (name.includes('idle')) {
-          idleAction = characterMixer.clipAction(clip);
-        } else if (name.includes('run')) {
-          runAction = characterMixer.clipAction(clip);
-        } else if (name.includes('walk')) {
-          walkAction = characterMixer.clipAction(clip);
-        }
-      }
-      
-      // Fallback: use first animation as walk if no specific ones found
-      if (!walkAction && gltf.animations.length > 0) {
-        walkAction = characterMixer.clipAction(gltf.animations[0]);
-      }
-      
-      // Start with idle or paused walk
-      if (idleAction) {
-        idleAction.play();
-        currentAction = idleAction;
-      } else if (walkAction) {
-        walkAction.play();
-        walkAction.paused = true;
-        currentAction = walkAction;
-      }
-    }
-    
-    console.log('✨ Character loaded!');
-  },
-  undefined,
-  (error) => console.error('Error loading character:', error)
-);
+/**
+ * Create a simple capsule character as fallback
+ * Using bright colors and large size to ensure visibility
+ */
+function createFallbackCharacter() {
+  const group = new THREE.Group();
+  
+  // Body - BRIGHT RED box (very visible for debugging)
+  const bodyGeom = new THREE.BoxGeometry(0.8, 1.4, 0.5);
+  const bodyMat = new THREE.MeshStandardMaterial({ 
+    color: 0xff0000, // Bright red
+    roughness: 0.5,
+    emissive: 0x330000 // Slight glow
+  });
+  const body = new THREE.Mesh(bodyGeom, bodyMat);
+  body.position.y = 0.7; // Center of body
+  body.castShadow = true;
+  group.add(body);
+  
+  // Head - BRIGHT YELLOW sphere
+  const headGeom = new THREE.SphereGeometry(0.35, 16, 16);
+  const headMat = new THREE.MeshStandardMaterial({ 
+    color: 0xffff00, // Bright yellow
+    roughness: 0.4,
+    emissive: 0x333300
+  });
+  const head = new THREE.Mesh(headGeom, headMat);
+  head.position.y = 1.55;
+  head.castShadow = true;
+  group.add(head);
+  
+  // Eyes - dark
+  const eyeGeom = new THREE.SphereGeometry(0.06, 8, 8);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
+  leftEye.position.set(-0.1, 1.6, 0.3);
+  group.add(leftEye);
+  const rightEye = new THREE.Mesh(eyeGeom, eyeMat);
+  rightEye.position.set(0.1, 1.6, 0.3);
+  group.add(rightEye);
+  
+  console.log('👤 Fallback character created (RED/YELLOW - debug mode)');
+  return group;
+}
+
+// ALWAYS use fallback character for now (reliable visibility)
+// TODO: Fix character.glb scaling issue later
+console.log('👤 Using fallback capsule character (reliable)');
+characterModel = createFallbackCharacter();
+scene.add(characterModel);
 
 // Load city map
 loader.load(
@@ -596,9 +588,19 @@ function createProceduralCity() {
   
   console.log(`🏙️ Procedural city created with ${collisionMeshes.length} collision meshes`);
   
-  // Set player spawn
-  player.position.set(0, CONFIG.PLAYER_HEIGHT, 0);
+  // Set player spawn at city edge with clear view
+  player.position.set(-55, CONFIG.PLAYER_HEIGHT, -55);
   player.groundHeight = 0;
+  player.rotation = Math.PI / 4; // Face toward city center
+  
+  // Also reset camera position immediately (no smooth follow for initial position)
+  const camX = player.position.x + Math.sin(cameraOrbit.angleY) * cameraOrbit.distance;
+  const camZ = player.position.z + Math.cos(cameraOrbit.angleY) * cameraOrbit.distance;
+  const camY = player.position.y + CONFIG.CAMERA_HEIGHT;
+  camera.position.set(camX, camY, camZ);
+  camera.lookAt(player.position.x, player.position.y - 0.5, player.position.z);
+  
+  console.log(`🎯 Player spawned at (${player.position.x}, ${player.position.y}, ${player.position.z})`);
 }
 
 // Fallback ground plane
@@ -723,63 +725,48 @@ function animate() {
       player.velocity.y = 0;
     }
     
-    // ========================================
-    // CHARACTER UPDATE
-    // ========================================
+  } // end if (isLocked)
+  
+  // ========================================
+  // CHARACTER UPDATE (always runs)
+  // ========================================
+  
+  if (characterModel) {
+    // Position at player's feet
+    characterModel.position.set(
+      player.position.x,
+      player.position.y - CONFIG.PLAYER_HEIGHT,
+      player.position.z
+    );
     
-    if (characterModel) {
-      // Position at player's feet
-      characterModel.position.set(
-        player.position.x,
-        player.position.y - CONFIG.PLAYER_HEIGHT,
-        player.position.z
-      );
-      
-      // Face movement direction
-      characterModel.rotation.y = player.rotation;
-      
-      // Animation state
-      if (wantsToMove) {
-        if (player.isRunning && runAction) {
-          switchAnimation(runAction);
-        } else if (walkAction) {
-          switchAnimation(walkAction);
-          if (walkAction.paused) walkAction.paused = false;
-        }
-      } else {
-        if (idleAction) {
-          switchAnimation(idleAction);
-        } else if (walkAction) {
-          walkAction.paused = true;
-        }
-      }
-    }
-    
-    // Update animation mixer
-    if (characterMixer) {
-      characterMixer.update(delta);
-    }
-    
-    // ========================================
-    // CAMERA - THIRD PERSON
-    // ========================================
-    
-    // Calculate camera position behind character
-    const camX = player.position.x + Math.sin(cameraOrbit.angleY) * cameraOrbit.distance;
-    const camZ = player.position.z + Math.cos(cameraOrbit.angleY) * cameraOrbit.distance;
-    const camY = player.position.y + CONFIG.CAMERA_HEIGHT + Math.sin(cameraOrbit.angleX) * cameraOrbit.distance * 0.5;
-    
-    // Smooth camera follow
-    const smoothness = 10.0;
-    const t = 1 - Math.exp(-smoothness * delta);
-    
-    camera.position.x += (camX - camera.position.x) * t;
-    camera.position.y += (camY - camera.position.y) * t;
-    camera.position.z += (camZ - camera.position.z) * t;
-    
-    // Look at player
-    camera.lookAt(player.position.x, player.position.y - 0.5, player.position.z);
+    // Face movement direction
+    characterModel.rotation.y = player.rotation;
   }
+  
+  // Update animation mixer
+  if (characterMixer) {
+    characterMixer.update(delta);
+  }
+  
+  // ========================================
+  // CAMERA - THIRD PERSON (always runs)
+  // ========================================
+  
+  // Calculate camera position behind character
+  const camX = player.position.x + Math.sin(cameraOrbit.angleY) * cameraOrbit.distance;
+  const camZ = player.position.z + Math.cos(cameraOrbit.angleY) * cameraOrbit.distance;
+  const camY = player.position.y + CONFIG.CAMERA_HEIGHT + Math.sin(cameraOrbit.angleX) * cameraOrbit.distance * 0.5;
+  
+  // Smooth camera follow
+  const smoothness = 10.0;
+  const t = 1 - Math.exp(-smoothness * delta);
+  
+  camera.position.x += (camX - camera.position.x) * t;
+  camera.position.y += (camY - camera.position.y) * t;
+  camera.position.z += (camZ - camera.position.z) * t;
+  
+  // Look at player
+  camera.lookAt(player.position.x, player.position.y - 0.5, player.position.z);
   
   renderer.render(scene, camera);
 }
