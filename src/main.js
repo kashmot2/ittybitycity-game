@@ -307,6 +307,15 @@ let walkAction = null;
 let runAction = null;
 let currentAction = null;
 
+// Procedural animation state for fallback character
+const proceduralAnim = {
+  phase: 0,        // Animation cycle phase (0-2π)
+  isMoving: false,
+  bobAmount: 0,    // Current bob height
+  swayAmount: 0,   // Current sway rotation
+  limbRotation: 0  // Arm/leg swing
+};
+
 // ============================================================================
 // UI ELEMENTS
 // ============================================================================
@@ -394,48 +403,190 @@ dracoLoader.setDecoderConfig({ type: 'js' });
 loader.setDRACOLoader(dracoLoader);
 
 /**
- * Create a simple capsule character as fallback
- * Using bright colors and large size to ensure visibility
+ * Create a simple character with animatable limbs
+ * Character parts stored for procedural animation
  */
+let charParts = {}; // Store references to animate
+
 function createFallbackCharacter() {
   const group = new THREE.Group();
   
-  // Body - BRIGHT RED box (very visible for debugging)
-  const bodyGeom = new THREE.BoxGeometry(0.8, 1.4, 0.5);
-  const bodyMat = new THREE.MeshStandardMaterial({ 
-    color: 0xff0000, // Bright red
-    roughness: 0.5,
-    emissive: 0x330000 // Slight glow
+  // -- TORSO (main body) --
+  const torsoGeom = new THREE.BoxGeometry(0.5, 0.7, 0.3);
+  const torsoMat = new THREE.MeshStandardMaterial({ 
+    color: 0x3498db, // Blue shirt
+    roughness: 0.7
   });
-  const body = new THREE.Mesh(bodyGeom, bodyMat);
-  body.position.y = 0.7; // Center of body
-  body.castShadow = true;
-  group.add(body);
+  const torso = new THREE.Mesh(torsoGeom, torsoMat);
+  torso.position.y = 1.1;
+  torso.castShadow = true;
+  group.add(torso);
+  charParts.torso = torso;
   
-  // Head - BRIGHT YELLOW sphere
-  const headGeom = new THREE.SphereGeometry(0.35, 16, 16);
+  // -- HEAD --
+  const headGeom = new THREE.SphereGeometry(0.22, 16, 16);
   const headMat = new THREE.MeshStandardMaterial({ 
-    color: 0xffff00, // Bright yellow
-    roughness: 0.4,
-    emissive: 0x333300
+    color: 0xffdbac, // Skin tone
+    roughness: 0.6
   });
   const head = new THREE.Mesh(headGeom, headMat);
-  head.position.y = 1.55;
+  head.position.y = 1.65;
   head.castShadow = true;
   group.add(head);
+  charParts.head = head;
   
-  // Eyes - dark
-  const eyeGeom = new THREE.SphereGeometry(0.06, 8, 8);
-  const eyeMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
-  const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
-  leftEye.position.set(-0.1, 1.6, 0.3);
-  group.add(leftEye);
-  const rightEye = new THREE.Mesh(eyeGeom, eyeMat);
-  rightEye.position.set(0.1, 1.6, 0.3);
-  group.add(rightEye);
+  // -- HAIR (back of head visible) --
+  const hairGeom = new THREE.SphereGeometry(0.24, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+  const hairMat = new THREE.MeshStandardMaterial({ color: 0x4a3728, roughness: 0.9 });
+  const hair = new THREE.Mesh(hairGeom, hairMat);
+  hair.position.y = 1.7;
+  hair.rotation.x = Math.PI;
+  hair.castShadow = true;
+  group.add(hair);
   
-  console.log('👤 Fallback character created (RED/YELLOW - debug mode)');
+  // -- LEGS (pivots at hip) --
+  const legGeom = new THREE.BoxGeometry(0.15, 0.55, 0.15);
+  const legMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50, roughness: 0.8 }); // Dark pants
+  
+  // Left leg pivot
+  const leftLegPivot = new THREE.Group();
+  leftLegPivot.position.set(-0.13, 0.75, 0);
+  const leftLeg = new THREE.Mesh(legGeom, legMat);
+  leftLeg.position.y = -0.275; // Offset from pivot
+  leftLeg.castShadow = true;
+  leftLegPivot.add(leftLeg);
+  group.add(leftLegPivot);
+  charParts.leftLeg = leftLegPivot;
+  
+  // Right leg pivot
+  const rightLegPivot = new THREE.Group();
+  rightLegPivot.position.set(0.13, 0.75, 0);
+  const rightLeg = new THREE.Mesh(legGeom, legMat);
+  rightLeg.position.y = -0.275;
+  rightLeg.castShadow = true;
+  rightLegPivot.add(rightLeg);
+  group.add(rightLegPivot);
+  charParts.rightLeg = rightLegPivot;
+  
+  // -- FEET --
+  const footGeom = new THREE.BoxGeometry(0.15, 0.1, 0.22);
+  const footMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 }); // Black shoes
+  
+  const leftFoot = new THREE.Mesh(footGeom, footMat);
+  leftFoot.position.set(0, -0.55, 0.03);
+  leftFoot.castShadow = true;
+  leftLegPivot.add(leftFoot);
+  
+  const rightFoot = new THREE.Mesh(footGeom, footMat);
+  rightFoot.position.set(0, -0.55, 0.03);
+  rightFoot.castShadow = true;
+  rightLegPivot.add(rightFoot);
+  
+  // -- ARMS (pivots at shoulder) --
+  const armGeom = new THREE.BoxGeometry(0.12, 0.45, 0.12);
+  const armMat = new THREE.MeshStandardMaterial({ color: 0x3498db, roughness: 0.7 }); // Match shirt
+  
+  // Left arm pivot
+  const leftArmPivot = new THREE.Group();
+  leftArmPivot.position.set(-0.35, 1.35, 0);
+  const leftArm = new THREE.Mesh(armGeom, armMat);
+  leftArm.position.y = -0.225;
+  leftArm.castShadow = true;
+  leftArmPivot.add(leftArm);
+  group.add(leftArmPivot);
+  charParts.leftArm = leftArmPivot;
+  
+  // Right arm pivot
+  const rightArmPivot = new THREE.Group();
+  rightArmPivot.position.set(0.35, 1.35, 0);
+  const rightArm = new THREE.Mesh(armGeom, armMat);
+  rightArm.position.y = -0.225;
+  rightArm.castShadow = true;
+  rightArmPivot.add(rightArm);
+  group.add(rightArmPivot);
+  charParts.rightArm = rightArmPivot;
+  
+  // -- HANDS (skin colored) --
+  const handGeom = new THREE.SphereGeometry(0.06, 8, 8);
+  const handMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
+  
+  const leftHand = new THREE.Mesh(handGeom, handMat);
+  leftHand.position.y = -0.48;
+  leftArmPivot.add(leftHand);
+  
+  const rightHand = new THREE.Mesh(handGeom, handMat);
+  rightHand.position.y = -0.48;
+  rightArmPivot.add(rightHand);
+  
+  console.log('👤 Fallback character created with animatable limbs');
   return group;
+}
+
+/**
+ * Update procedural walking animation
+ * @param {number} delta - Time delta
+ * @param {boolean} isMoving - Whether character is moving
+ * @param {boolean} isRunning - Whether character is running
+ */
+function updateProceduralAnimation(delta, isMoving, isRunning) {
+  if (!charParts.leftLeg) return; // No character parts to animate
+  
+  const speed = isRunning ? 18 : 10; // Animation speed
+  const limbSwing = isRunning ? 0.8 : 0.5; // How far limbs swing
+  const bobHeight = isRunning ? 0.08 : 0.04; // Vertical bob
+  
+  if (isMoving) {
+    // Advance animation phase
+    proceduralAnim.phase += delta * speed;
+    if (proceduralAnim.phase > Math.PI * 2) {
+      proceduralAnim.phase -= Math.PI * 2;
+    }
+    
+    // Calculate limb positions using sin/cos
+    const swing = Math.sin(proceduralAnim.phase) * limbSwing;
+    const bob = Math.abs(Math.sin(proceduralAnim.phase * 2)) * bobHeight;
+    
+    // Legs swing opposite to each other
+    charParts.leftLeg.rotation.x = swing;
+    charParts.rightLeg.rotation.x = -swing;
+    
+    // Arms swing opposite to legs (natural walking motion)
+    charParts.leftArm.rotation.x = -swing * 0.8;
+    charParts.rightArm.rotation.x = swing * 0.8;
+    
+    // Body bob
+    if (charParts.torso) {
+      charParts.torso.position.y = 1.1 + bob;
+      charParts.head.position.y = 1.65 + bob;
+    }
+    
+    // Slight torso lean forward when running
+    if (isRunning && characterModel) {
+      charParts.torso.rotation.x = 0.1;
+    } else if (charParts.torso) {
+      charParts.torso.rotation.x = 0;
+    }
+  } else {
+    // Idle - smoothly return to neutral pose
+    const returnSpeed = 8;
+    
+    charParts.leftLeg.rotation.x *= Math.max(0, 1 - delta * returnSpeed);
+    charParts.rightLeg.rotation.x *= Math.max(0, 1 - delta * returnSpeed);
+    charParts.leftArm.rotation.x *= Math.max(0, 1 - delta * returnSpeed);
+    charParts.rightArm.rotation.x *= Math.max(0, 1 - delta * returnSpeed);
+    
+    if (charParts.torso) {
+      charParts.torso.position.y = 1.1;
+      charParts.head.position.y = 1.65;
+      charParts.torso.rotation.x = 0;
+    }
+    
+    // Subtle idle breathing
+    const breathe = Math.sin(Date.now() * 0.002) * 0.01;
+    if (charParts.torso) {
+      charParts.torso.position.y += breathe;
+    }
+  }
 }
 
 // ALWAYS use fallback character for now (reliable visibility)
@@ -731,6 +882,9 @@ function animate() {
   // CHARACTER UPDATE (always runs)
   // ========================================
   
+  // Determine if character is moving
+  const isCharMoving = isLocked && (keys.forward || keys.backward || keys.left || keys.right);
+  
   if (characterModel) {
     // Position at player's feet
     characterModel.position.set(
@@ -743,7 +897,10 @@ function animate() {
     characterModel.rotation.y = player.rotation;
   }
   
-  // Update animation mixer
+  // Update procedural animation for fallback character
+  updateProceduralAnimation(delta, isCharMoving, player.isRunning);
+  
+  // Update animation mixer (for GLTF characters with built-in animations)
   if (characterMixer) {
     characterMixer.update(delta);
   }
