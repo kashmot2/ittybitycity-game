@@ -138,7 +138,7 @@ const player = {
 };
 
 const cameraOrbit = {
-  angleX: 0.15,  // Lower angle for more horizontal view
+  angleX: -0.1,  // Negative = look more horizontally/upward to see sky
   angleY: 0,
   distance: CONFIG.CAMERA_DISTANCE
 };
