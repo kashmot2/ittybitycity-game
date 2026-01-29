@@ -739,8 +739,8 @@ function createProceduralCity() {
   
   console.log(`🏙️ Procedural city created with ${collisionMeshes.length} collision meshes`);
   
-  // Set player spawn at city edge with clear view
-  player.position.set(-55, CONFIG.PLAYER_HEIGHT, -55);
+  // Set player spawn inside city center with view of buildings
+  player.position.set(0, CONFIG.PLAYER_HEIGHT, 0);
   player.groundHeight = 0;
   player.rotation = Math.PI / 4; // Face toward city center
   
