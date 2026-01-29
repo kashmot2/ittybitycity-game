@@ -59,8 +59,8 @@ const CONFIG = {
   STEP_HEIGHT: 0.4,        // Max height player can step over
   
   // Camera
-  CAMERA_DISTANCE: 5,
-  CAMERA_HEIGHT: 2.5,
+  CAMERA_DISTANCE: 6,
+  CAMERA_HEIGHT: 1.5,
   CAMERA_MIN_DISTANCE: 2,
   CAMERA_MAX_DISTANCE: 10,
   MOUSE_SENSITIVITY: 0.002,
@@ -138,7 +138,7 @@ const player = {
 };
 
 const cameraOrbit = {
-  angleX: 0.3,  // Start looking slightly down
+  angleX: 0.15,  // Lower angle for more horizontal view
   angleY: 0,
   distance: CONFIG.CAMERA_DISTANCE
 };
